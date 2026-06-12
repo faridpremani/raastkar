@@ -1,6 +1,5 @@
 workflows:
 
-  # ─── ANDROID APK / AAB ──────────────────────────────────────────────────────
   android-release:
     name: RaastKar Android Release
     max_build_duration: 60
@@ -22,6 +21,20 @@ workflows:
           keyAlias=$CM_KEY_ALIAS
           storeFile=/tmp/keystore.jks
           KEYEOF
+
+      - name: Set up local.properties
+        script: |
+          FLUTTER_SDK=$(which flutter | sed 's|/bin/flutter||')
+          cat > "$CM_BUILD_DIR/android/local.properties" << LPEOF
+          flutter.sdk=$FLUTTER_SDK
+          sdk.dir=/usr/local/share/android-sdk
+          flutter.compileSdkVersion=35
+          flutter.minSdkVersion=21
+          flutter.targetSdkVersion=35
+          flutter.ndkVersion=27.0.12077973
+          flutter.versionCode=$PROJECT_BUILD_NUMBER
+          flutter.versionName=1.0.$PROJECT_BUILD_NUMBER
+          LPEOF
 
       - name: Get Flutter packages
         script: flutter pub get
@@ -51,7 +64,6 @@ workflows:
           success: true
           failure: true
 
-  # ─── iOS IPA ────────────────────────────────────────────────────────────────
   ios-release:
     name: RaastKar iOS Release
     max_build_duration: 60
@@ -94,7 +106,6 @@ workflows:
           success: true
           failure: true
 
-  # ─── FLUTTER WEB → GoDaddy ──────────────────────────────────────────────────
   web-release:
     name: RaastKar Web Release
     max_build_duration: 30
