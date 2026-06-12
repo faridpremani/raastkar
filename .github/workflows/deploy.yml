@@ -1,0 +1,34 @@
+name: RaastKar Web Deploy to GoDaddy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+          channel: stable
+          cache: true
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Build Flutter Web
+        run: flutter build web --release --base-href="/" --web-renderer=canvaskit
+
+      - name: Deploy to GoDaddy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: "68.178.238.223"
+          username: "admin@raastkar.com"
+          password: ".UV-7~tl]*QxQnv~"
+          local-dir: ./build/web/
+          server-dir: /home/v06q2yplu5ji/public_html/raastkar.com/
+          dangerous-clean-slate: false
