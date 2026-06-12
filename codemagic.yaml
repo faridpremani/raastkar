@@ -7,7 +7,7 @@ workflows:
     instance_type: mac_mini_m1
 
     environment:
-      flutter: 3.22.0
+      flutter: 3.24.0
       java: 17
       groups:
         - raastkar_android_signing
@@ -58,7 +58,7 @@ workflows:
     instance_type: mac_mini_m1
 
     environment:
-      flutter: 3.22.0
+      flutter: 3.24.0
       xcode: latest
       cocoapods: default
       vars:
@@ -101,7 +101,7 @@ workflows:
     instance_type: linux_x2
 
     environment:
-      flutter: 3.22.0
+      flutter: 3.24.0
       vars:
         FTP_HOST: "68.178.238.223"
         FTP_USER: "admin@raastkar.com"
