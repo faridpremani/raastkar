@@ -1,0 +1,44 @@
+name: raastkar
+description: RaastKar - Smart Farming App for Pakistan
+
+publish_to: 'none'
+
+version: 1.0.0+11
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  http: ^1.2.0
+  shared_preferences: ^2.2.0
+  image_picker: ^1.1.2
+  geolocator: ^11.0.0
+  geocoding: ^3.0.0
+  cupertino_icons: ^1.0.6
+  google_sign_in: ^6.2.1
+  flutter_stripe: ^10.1.1
+  url_launcher: ^6.2.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#2E7D52"
+  adaptive_icon_foreground: "assets/icon/icon.png"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/
+
+    
