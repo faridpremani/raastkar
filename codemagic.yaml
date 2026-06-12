@@ -1,0 +1,159 @@
+workflows:
+
+  # ─── ANDROID APK / AAB (Google Play) ───────────────────────────────────────
+  android-release:
+    name: RaastKar Android Release
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+
+    environment:
+      flutter: 3.22.0
+      java: 17
+      vars:
+        PACKAGE_NAME: "com.raastkar.farming"
+      groups:
+        - raastkar_android_signing   # keystore + passwords stored in CM env group
+      android_signing:
+        - raastkar_keystore
+
+    scripts:
+      - name: Set up key.properties
+        script: |
+          cat > "$CM_BUILD_DIR/android/key.properties" <<EOF
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=/tmp/keystore.jks
+          EOF
+          echo "$CM_KEYSTORE" | base64 --decode > /tmp/keystore.jks
+
+      - name: Get Flutter packages
+        script: flutter pub get
+
+      - name: Build APK (release)
+        script: |
+          flutter build apk --release \
+            --build-number=$PROJECT_BUILD_NUMBER \
+            --build-name=1.0.$PROJECT_BUILD_NUMBER
+
+      - name: Build AAB (Play Store)
+        script: |
+          flutter build appbundle --release \
+            --build-number=$PROJECT_BUILD_NUMBER \
+            --build-name=1.0.$PROJECT_BUILD_NUMBER
+
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
+      - build/app/outputs/bundle/release/app-release.aab
+      - flutter_drive.log
+
+    publishing:
+      email:
+        recipients:
+          - contact@ignitethespark.org
+          - farid.premani@gmail.com
+        notify:
+          success: true
+          failure: true
+      # Uncomment to auto-publish to Play Store internal track:
+      # google_play:
+      #   credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+      #   track: internal
+
+  # ─── iOS IPA ────────────────────────────────────────────────────────────────
+  ios-release:
+    name: RaastKar iOS Release
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+
+    environment:
+      flutter: 3.22.0
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: "com.raastkar.farming"
+        APP_STORE_APPLE_ID: "YOUR_APP_STORE_APPLE_ID"   # fill in after App Store Connect setup
+      groups:
+        - raastkar_ios_signing
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.raastkar.farming
+
+    scripts:
+      - name: Get Flutter packages
+        script: flutter pub get
+
+      - name: Install CocoaPods
+        script: |
+          cd ios && pod install
+
+      - name: Build iOS IPA
+        script: |
+          flutter build ipa --release \
+            --build-number=$PROJECT_BUILD_NUMBER \
+            --build-name=1.0.$PROJECT_BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          - contact@ignitethespark.org
+          - farid.premani@gmail.com
+        notify:
+          success: true
+          failure: true
+      # Uncomment to auto-publish to TestFlight:
+      # app_store_connect:
+      #   api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+      #   key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+      #   issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+      #   submit_to_testflight: true
+
+  # ─── FLUTTER WEB → GoDaddy ──────────────────────────────────────────────────
+  web-release:
+    name: RaastKar Web Release
+    max_build_duration: 30
+    instance_type: linux_x2
+
+    environment:
+      flutter: 3.22.0
+      vars:
+        GODADDY_DEPLOY_PATH: "/public_html/raastkar.com"
+      groups:
+        - raastkar_ftp_credentials   # FTP_HOST, FTP_USER, FTP_PASS
+
+    scripts:
+      - name: Get Flutter packages
+        script: flutter pub get
+
+      - name: Build Flutter Web
+        script: |
+          flutter build web --release \
+            --base-href="/" \
+            --web-renderer=canvaskit
+
+      - name: Deploy to GoDaddy via FTP
+        script: |
+          apt-get install -y lftp
+          lftp -e "
+            set ftp:ssl-allow no;
+            open -u $FTP_USER,$FTP_PASS $FTP_HOST;
+            mirror -R --delete build/web/ $GODADDY_DEPLOY_PATH/;
+            quit
+          "
+
+    artifacts:
+      - build/web/
+
+    publishing:
+      email:
+        recipients:
+          - contact@ignitethespark.org
+          - farid.premani@gmail.com
+        notify:
+          success: true
+          failure: true
