@@ -76,12 +76,21 @@ workflows:
       vars:
         BUNDLE_ID: "com.raastkar.farming"
       groups:
-        - raastkar_ios_signing
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.raastkar.farming
+        - ios_signing
 
     scripts:
+      - name: Set up keychain
+        script: |
+          keychain initialize
+          echo $CM_CERTIFICATE | base64 --decode > /tmp/cert.p12
+          keychain add-certificates --certificate /tmp/cert.p12 --certificate-password $CM_CERTIFICATE_PASSWORD
+
+      - name: Set up provisioning profile
+        script: |
+          PROFILES_HOME="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES_HOME"
+          echo $CM_PROVISIONING_PROFILE | base64 --decode > "$PROFILES_HOME/CartIQ_AppStore.mobileprovision"
+
       - name: Get Flutter packages
         script: flutter pub get
 
