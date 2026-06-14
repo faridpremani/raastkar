@@ -26,16 +26,15 @@ workflows:
         script: |
           FLUTTER_ROOT=$(dirname $(dirname $(which flutter)))
           echo "Flutter SDK: $FLUTTER_ROOT"
-          cat > "$CM_BUILD_DIR/android/local.properties" << LPEOF
-          flutter.sdk=$FLUTTER_ROOT
-          sdk.dir=/usr/local/share/android-sdk
-          flutter.compileSdkVersion=35
-          flutter.minSdkVersion=21
-          flutter.targetSdkVersion=35
-          flutter.ndkVersion=27.0.12077973
-          flutter.versionCode=$PROJECT_BUILD_NUMBER
-          flutter.versionName=1.0.$PROJECT_BUILD_NUMBER
-          LPEOF
+          echo "flutter.sdk=$FLUTTER_ROOT" > "$CM_BUILD_DIR/android/local.properties"
+          echo "sdk.dir=/usr/local/share/android-sdk" >> "$CM_BUILD_DIR/android/local.properties"
+          echo "flutter.compileSdkVersion=35" >> "$CM_BUILD_DIR/android/local.properties"
+          echo "flutter.minSdkVersion=21" >> "$CM_BUILD_DIR/android/local.properties"
+          echo "flutter.targetSdkVersion=35" >> "$CM_BUILD_DIR/android/local.properties"
+          echo "flutter.ndkVersion=27.0.12077973" >> "$CM_BUILD_DIR/android/local.properties"
+          echo "flutter.versionCode=$PROJECT_BUILD_NUMBER" >> "$CM_BUILD_DIR/android/local.properties"
+          echo "flutter.versionName=1.0.$PROJECT_BUILD_NUMBER" >> "$CM_BUILD_DIR/android/local.properties"
+          cat "$CM_BUILD_DIR/android/local.properties" 
           cat "$CM_BUILD_DIR/android/local.properties"
 
       - name: Get Flutter packages
