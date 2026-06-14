@@ -24,10 +24,10 @@ workflows:
 
       - name: Set up local.properties
         script: |
-          FLUTTER_SDK=$(dirname $(dirname $(which flutter)))
-          echo "Flutter SDK at: $FLUTTER_SDK"
+          FLUTTER_ROOT=$(flutter --version --machine 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('flutterRoot',''))" 2>/dev/null || echo "/Users/builder/programs/flutter")
+          echo "Using Flutter at: $FLUTTER_ROOT"
           cat > "$CM_BUILD_DIR/android/local.properties" << LPEOF
-          flutter.sdk=$FLUTTER_SDK
+          flutter.sdk=$FLUTTER_ROOT
           sdk.dir=/usr/local/share/android-sdk
           flutter.compileSdkVersion=35
           flutter.minSdkVersion=21
@@ -36,7 +36,7 @@ workflows:
           flutter.versionCode=$PROJECT_BUILD_NUMBER
           flutter.versionName=1.0.$PROJECT_BUILD_NUMBER
           LPEOF
-          echo "local.properties written:"
+          echo "--- local.properties ---"
           cat "$CM_BUILD_DIR/android/local.properties"
 
       - name: Get Flutter packages
@@ -49,6 +49,12 @@ workflows:
             --build-name=1.0.$PROJECT_BUILD_NUMBER \
             --verbose 2>&1 | tee /tmp/build_log.txt
           exit ${PIPESTATUS[0]}
+
+      - name: Build AAB
+        script: |
+          flutter build appbundle --release \
+            --build-number=$PROJECT_BUILD_NUMBER \
+            --build-name=1.0.$PROJECT_BUILD_NUMBER
 
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
@@ -73,8 +79,6 @@ workflows:
       flutter: 3.24.0
       xcode: latest
       cocoapods: default
-      vars:
-        BUNDLE_ID: "com.raastkar.farming"
       groups:
         - raastkar_ios_signing
       ios_signing:
@@ -84,10 +88,8 @@ workflows:
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
-
       - name: Install CocoaPods
         script: cd ios && pod install
-
       - name: Build iOS IPA
         script: |
           flutter build ipa --release \
@@ -122,13 +124,8 @@ workflows:
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
-
       - name: Build Flutter Web
-        script: |
-          flutter build web --release \
-            --base-href="/" \
-            --web-renderer=canvaskit
-
+        run: flutter build web --release --base-href="/" --web-renderer=canvaskit
       - name: Deploy to GoDaddy via FTP
         script: |
           apt-get install -y lftp
@@ -136,7 +133,7 @@ workflows:
             set ftp:ssl-allow no;
             set ssl:verify-certificate no;
             open -u $FTP_USER,$FTP_PASS $FTP_HOST;
-            mirror -R --delete --verbose build/web/ $DEPLOY_PATH/;
+            mirror -R --delete build/web/ $DEPLOY_PATH/;
             quit
           "
 
