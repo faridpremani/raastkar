@@ -5,19 +5,6 @@ allprojects {
     }
 }
 
-// Fix for old Flutter plugins (geolocator etc) that use flutter.compileSdkVersion
-subprojects {
-    afterEvaluate { project ->
-        if (project.hasProperty("android")) {
-            project.android {
-                if (compileSdkVersion == null) {
-                    compileSdkVersion 35
-                }
-            }
-        }
-    }
-}
-
 val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
 rootProject.layout.buildDirectory.value(newBuildDir)
 
