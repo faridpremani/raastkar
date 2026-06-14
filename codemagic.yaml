@@ -124,8 +124,13 @@ workflows:
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
+
       - name: Build Flutter Web
-        run: flutter build web --release --base-href="/" --web-renderer=canvaskit
+        script: |
+          flutter build web --release \
+            --base-href="/" \
+            --web-renderer=canvaskit
+
       - name: Deploy to GoDaddy via FTP
         script: |
           apt-get install -y lftp
