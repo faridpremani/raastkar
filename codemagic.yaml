@@ -26,33 +26,47 @@ workflows:
         script: |
           FLUTTER_ROOT=$(dirname $(dirname $(which flutter)))
           echo "Flutter SDK: $FLUTTER_ROOT"
-          echo "flutter.sdk=$FLUTTER_ROOT" > "$CM_BUILD_DIR/android/local.properties"
-          echo "sdk.dir=/usr/local/share/android-sdk" >> "$CM_BUILD_DIR/android/local.properties"
-          echo "flutter.compileSdkVersion=35" >> "$CM_BUILD_DIR/android/local.properties"
-          echo "flutter.minSdkVersion=21" >> "$CM_BUILD_DIR/android/local.properties"
-          echo "flutter.targetSdkVersion=35" >> "$CM_BUILD_DIR/android/local.properties"
-          echo "flutter.ndkVersion=27.0.12077973" >> "$CM_BUILD_DIR/android/local.properties"
-          echo "flutter.versionCode=$PROJECT_BUILD_NUMBER" >> "$CM_BUILD_DIR/android/local.properties"
-          echo "flutter.versionName=1.0.$PROJECT_BUILD_NUMBER" >> "$CM_BUILD_DIR/android/local.properties"
-          cat "$CM_BUILD_DIR/android/local.properties" 
-          cat "$CM_BUILD_DIR/android/local.properties"
+          cat > "$CM_BUILD_DIR/android/local.properties" << LPEOF
+          flutter.sdk=$FLUTTER_ROOT
+          sdk.dir=/usr/local/share/android-sdk
+          flutter.compileSdkVersion=35
+          flutter.minSdkVersion=21
+          flutter.targetSdkVersion=35
+          flutter.ndkVersion=27.0.12077973
+          flutter.versionCode=$PROJECT_BUILD_NUMBER
+          flutter.versionName=1.0.$PROJECT_BUILD_NUMBER
+          LPEOF
 
       - name: Get Flutter packages
         script: flutter pub get
 
-      - name: Patch geolocator plugin
+      - name: Patch old Flutter plugins
         script: |
-          GEOLOCATOR=$(find $HOME/.pub-cache -name "build.gradle" -path "*/geolocator_android*" 2>/dev/null | head -1)
-          if [ -n "$GEOLOCATOR" ]; then
-            echo "Patching: $GEOLOCATOR"
-            sed -i '' 's/flutter.compileSdkVersion/35/g' "$GEOLOCATOR" 2>/dev/null || sed -i 's/flutter.compileSdkVersion/35/g' "$GEOLOCATOR"
-            sed -i '' 's/flutter.minSdkVersion/21/g' "$GEOLOCATOR" 2>/dev/null || sed -i 's/flutter.minSdkVersion/21/g' "$GEOLOCATOR"
-            sed -i '' 's/flutter.targetSdkVersion/35/g' "$GEOLOCATOR" 2>/dev/null || sed -i 's/flutter.targetSdkVersion/35/g' "$GEOLOCATOR"
-            echo "Patched geolocator build.gradle:"
-            cat "$GEOLOCATOR"
+          PUB_CACHE="$HOME/.pub-cache/hosted/pub.dev"
+          
+          # Patch geolocator_android - known path from build logs
+          GEOLOCATOR="$PUB_CACHE/geolocator_android-4.6.2/android/build.gradle"
+          if [ -f "$GEOLOCATOR" ]; then
+            echo "Patching geolocator_android..."
+            sed -i 's/flutter\.compileSdkVersion/35/g' "$GEOLOCATOR"
+            sed -i 's/flutter\.minSdkVersion/21/g' "$GEOLOCATOR"
+            sed -i 's/flutter\.targetSdkVersion/35/g' "$GEOLOCATOR"
+            echo "Done. Line 29 now:"
+            sed -n '25,35p' "$GEOLOCATOR"
           else
-            echo "geolocator build.gradle not found, skipping patch"
+            echo "WARNING: geolocator not found at $GEOLOCATOR"
+            find $PUB_CACHE -name "build.gradle" -path "*geolocator*" 2>/dev/null
           fi
+          
+          # Patch any other plugin using flutter.compileSdkVersion
+          echo "Scanning all plugins for flutter.compileSdkVersion..."
+          grep -rl "flutter\.compileSdkVersion" $PUB_CACHE 2>/dev/null | while read f; do
+            echo "Patching: $f"
+            sed -i 's/flutter\.compileSdkVersion/35/g' "$f"
+            sed -i 's/flutter\.minSdkVersion/21/g' "$f"
+            sed -i 's/flutter\.targetSdkVersion/35/g' "$f"
+          done
+          echo "Patch complete"
 
       - name: Build APK
         script: |
