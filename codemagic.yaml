@@ -6,7 +6,7 @@ workflows:
     instance_type: mac_mini_m1
 
     environment:
-      flutter: 3.24.0
+      flutter: 3.27.0
       java: 17
       groups:
         - raastkar_android_signing
@@ -30,7 +30,6 @@ workflows:
           flutter.sdk=$FLUTTER_ROOT
           sdk.dir=/usr/local/share/android-sdk
           LPEOF
-          cat "$CM_BUILD_DIR/android/local.properties"
 
       - name: Get Flutter packages
         script: flutter pub get
@@ -43,8 +42,6 @@ workflows:
             perl -i -pe 's/flutter\.compileSdkVersion/35/g;s/flutter\.minSdkVersion/21/g;s/flutter\.targetSdkVersion/35/g' "$f"
           done
           echo "Patch done"
-          # Verify geolocator patched
-          grep -n "compileSdk\|minSdk\|targetSdk" $PUB/geolocator_android-4.6.2/android/build.gradle | head -5
 
       - name: Build APK
         script: |
@@ -80,7 +77,7 @@ workflows:
     instance_type: mac_mini_m1
 
     environment:
-      flutter: 3.24.0
+      flutter: 3.27.0
       xcode: latest
       cocoapods: default
       groups:
@@ -118,7 +115,7 @@ workflows:
     instance_type: linux_x2
 
     environment:
-      flutter: 3.24.0
+      flutter: 3.27.0
       vars:
         FTP_HOST: "68.178.238.223"
         FTP_USER: "admin@raastkar.com"
