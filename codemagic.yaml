@@ -24,8 +24,8 @@ workflows:
 
       - name: Set up local.properties
         script: |
-          FLUTTER_ROOT=$(flutter --version --machine 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('flutterRoot',''))" 2>/dev/null || echo "/Users/builder/programs/flutter")
-          echo "Using Flutter at: $FLUTTER_ROOT"
+          FLUTTER_ROOT=$(dirname $(dirname $(which flutter)))
+          echo "Flutter SDK: $FLUTTER_ROOT"
           cat > "$CM_BUILD_DIR/android/local.properties" << LPEOF
           flutter.sdk=$FLUTTER_ROOT
           sdk.dir=/usr/local/share/android-sdk
@@ -36,11 +36,24 @@ workflows:
           flutter.versionCode=$PROJECT_BUILD_NUMBER
           flutter.versionName=1.0.$PROJECT_BUILD_NUMBER
           LPEOF
-          echo "--- local.properties ---"
           cat "$CM_BUILD_DIR/android/local.properties"
 
       - name: Get Flutter packages
         script: flutter pub get
+
+      - name: Patch geolocator plugin
+        script: |
+          GEOLOCATOR=$(find $HOME/.pub-cache -name "build.gradle" -path "*/geolocator_android*" 2>/dev/null | head -1)
+          if [ -n "$GEOLOCATOR" ]; then
+            echo "Patching: $GEOLOCATOR"
+            sed -i '' 's/flutter.compileSdkVersion/35/g' "$GEOLOCATOR" 2>/dev/null || sed -i 's/flutter.compileSdkVersion/35/g' "$GEOLOCATOR"
+            sed -i '' 's/flutter.minSdkVersion/21/g' "$GEOLOCATOR" 2>/dev/null || sed -i 's/flutter.minSdkVersion/21/g' "$GEOLOCATOR"
+            sed -i '' 's/flutter.targetSdkVersion/35/g' "$GEOLOCATOR" 2>/dev/null || sed -i 's/flutter.targetSdkVersion/35/g' "$GEOLOCATOR"
+            echo "Patched geolocator build.gradle:"
+            cat "$GEOLOCATOR"
+          else
+            echo "geolocator build.gradle not found, skipping patch"
+          fi
 
       - name: Build APK
         script: |
@@ -124,13 +137,11 @@ workflows:
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
-
       - name: Build Flutter Web
         script: |
           flutter build web --release \
             --base-href="/" \
             --web-renderer=canvaskit
-
       - name: Deploy to GoDaddy via FTP
         script: |
           apt-get install -y lftp
