@@ -15,21 +15,20 @@ workflows:
       - name: Set up keystore
         script: |
           echo "$CM_KEYSTORE" | base64 --decode > /tmp/keystore.jks
-          cat > "$CM_BUILD_DIR/android/key.properties" << KEYEOF
-          storePassword=$CM_KEYSTORE_PASSWORD
-          keyPassword=$CM_KEY_PASSWORD
-          keyAlias=$CM_KEY_ALIAS
-          storeFile=/tmp/keystore.jks
-          KEYEOF
+          cat > "$CM_BUILD_DIR/android/key.properties" <<EOF
+storePassword=$CM_KEYSTORE_PASSWORD
+keyPassword=$CM_KEY_PASSWORD
+keyAlias=$CM_KEY_ALIAS
+storeFile=/tmp/keystore.jks
+EOF
 
       - name: Set up local.properties
         script: |
           FLUTTER_ROOT=$(dirname $(dirname $(which flutter)))
-          echo "Flutter SDK: $FLUTTER_ROOT"
-          cat > "$CM_BUILD_DIR/android/local.properties" << LPEOF
-          flutter.sdk=$FLUTTER_ROOT
-          sdk.dir=/usr/local/share/android-sdk
-          LPEOF
+          cat > "$CM_BUILD_DIR/android/local.properties" <<EOF
+flutter.sdk=$FLUTTER_ROOT
+sdk.dir=/usr/local/share/android-sdk
+EOF
 
       - name: Get Flutter packages
         script: flutter pub get
