@@ -181,14 +181,8 @@ workflows:
             --web-renderer=canvaskit
       - name: Deploy to GoDaddy via FTP
         script: |
-          apt-get install -y lftp
-          lftp -e "
-            set ftp:ssl-allow no;
-            set ssl:verify-certificate no;
-            open -u $FTP_USER,$FTP_PASS $FTP_HOST;
-            mirror -R --delete build/web/ $DEPLOY_PATH/;
-            quit
-          "
+          brew install lftp
+          lftp -e "set ftp:ssl-allow no; set ssl:verify-certificate no; open -u $FTP_USER,$FTP_PASS $FTP_HOST; mirror -R --delete build/web/ $DEPLOY_PATH/; quit"
 
     artifacts:
       - build/web/
