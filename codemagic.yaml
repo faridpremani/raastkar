@@ -181,8 +181,18 @@ workflows:
             --web-renderer=canvaskit
       - name: Deploy to GoDaddy via FTP
         script: |
-          brew install lftp
-          lftp -e "set ftp:ssl-allow no; set ssl:verify-certificate no; open -u $FTP_USER,$FTP_PASS $FTP_HOST; mirror -R --delete build/web/ $DEPLOY_PATH/; quit"
+          echo "Uploading to GoDaddy..."
+          find build/web -type f | while read f; do
+            REMOTE_PATH=$(echo "$f" | sed 's|build/web/||')
+            curl -s --ftp-create-dirs -T "$f" \
+              "ftp://$FTP_HOST$DEPLOY_PATH/$REMOTE_PATH" \
+              --user "$FTP_USER:$FTP_PASS" \
+              --ftp-ssl-control 2>/dev/null || \
+            curl -s --ftp-create-dirs -T "$f" \
+              "ftp://$FTP_HOST$DEPLOY_PATH/$REMOTE_PATH" \
+              --user "$FTP_USER:$FTP_PASS" --insecure
+          done
+          echo "Deploy complete"
 
     artifacts:
       - build/web/
