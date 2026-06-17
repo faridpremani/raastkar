@@ -18,7 +18,7 @@ workflows:
       - name: Set up local.properties
         script: |
           FLUTTER_ROOT=$(dirname $(dirname $(which flutter)))
-          printf "flutter.sdk=%s\nsdk.dir=/usr/local/share/android-sdk\n" "$FLUTTER_ROOT" > "$CM_BUILD_DIR/android/local.properties"
+          printf "flutter.sdk=%s\nsdk.dir=/usr/local/share/android-sdk\nflutter.targetSdkVersion=35\nflutter.compileSdkVersion=35\n" "$FLUTTER_ROOT" > "$CM_BUILD_DIR/android/local.properties"
 
       - name: Get Flutter packages
         script: flutter pub get
