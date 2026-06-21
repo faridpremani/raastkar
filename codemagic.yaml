@@ -154,17 +154,27 @@ workflows:
           PLIST
 
           KEYCHAIN_PATH=$(security list-keychains -d user | grep raastkar-build | tr -d ' "')
+          echo "Using keychain: $KEYCHAIN_PATH"
 
           xcodebuild -exportArchive \
             -archivePath /tmp/Runner.xcarchive \
             -exportPath /tmp/ipa_output \
             -exportOptionsPlist /tmp/ExportOptions.plist \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
-            2>&1 | tail -30
+            2>&1
 
-          mkdir -p build/ios/ipa
-          find /tmp/ipa_output -name "*.ipa" -exec cp {} build/ios/ipa/ \;
-          ls -la build/ios/ipa/
+          echo "=== Export output contents ==="
+          find /tmp/ipa_output -type f 2>/dev/null || echo "No output directory"
+
+          echo "=== Copying IPA ==="
+          mkdir -p $CM_BUILD_DIR/build/ios/ipa
+          find /tmp/ipa_output -name "*.ipa" -exec cp {} $CM_BUILD_DIR/build/ios/ipa/ \;
+          
+          echo "=== IPA files ==="
+          ls -lh $CM_BUILD_DIR/build/ios/ipa/ || echo "No IPA files found"
+          
+          # Also check archive for embedded IPA
+          find /tmp/Runner.xcarchive -name "*.ipa" 2>/dev/null || true
 
     artifacts:
       - build/ios/ipa/*.ipa
